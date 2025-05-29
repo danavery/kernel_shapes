@@ -10,6 +10,5 @@ wheels/
 .venv
 
 ESC-50-master/
-!ESC-50-master/README_ESC50.md
 data/
 *.pt

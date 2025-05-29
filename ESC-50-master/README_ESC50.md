@@ -1,1 +1,0 @@
-Expand the contents of the [ESC-50](https://github.com/karoldvl/ESC-50/archive/master.zip) download here. Easiest to unzip from the parent directory, or else you can expand it here with `unzip ESC-50-master.zip`, then `cp -r ESC-50-master/* .`.
