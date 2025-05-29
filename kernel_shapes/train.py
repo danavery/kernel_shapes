@@ -125,7 +125,7 @@ def run(kernel_params, max_epochs, min_epochs=20, patience=10, seed=0, use_spec_
         best_epoch = 0
         no_improve_count = 0
         best_model_path = f"best_model_{kernel_params[0]}_{seed}.pt"
-
+        epoch = -1 # make pyright happy
         # Training loop
         for epoch in range(max_epochs):
             epoch_start_time = time.time()
