@@ -1,0 +1,23 @@
+[project]
+name = "kernel_shapes"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.13"
+dependencies = [
+    "torch",
+    "torchaudio",
+    "tqdm",
+    "pandas",
+    "matplotlib",
+    "wandb",
+    "torchinfo",
+    "seaborn"
+]
+
+[project.optional-dependencies]
+dev = ["ruff"]
+
+[tool.ruff]
+line-length = 100
+extend-select = ["I"]
