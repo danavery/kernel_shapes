@@ -74,14 +74,18 @@ def validate(model, val_loader, device, criterion):
     return avg_val_loss, val_acc
 
 
-def run(kernel_params, max_epochs, min_epochs=20, patience=10, seed=0, use_spec_aug=None):
+def run(kernel_params, max_epochs, min_epochs=20, patience=10, seed=0, use_spec_aug=None, use_wandb=True):
     device = torch.device("cuda" if torch.cuda.is_available() else "mps")
     set_seed(seed)
     fold_results = []
 
     for fold in range(1, 6):
-        run = wandb.init(project="esc50", name=f"{kernel_params[0]}_fold_{fold}_seed_{seed}")
-        wandb.define_metric("epoch")
+        if use_wandb:
+            run = wandb.init(project="esc50", name=f"{kernel_params[0]}_fold_{fold}_seed_{seed}")
+            wandb.define_metric("epoch")
+        else:
+            run = None
+
         print(f"running {kernel_params[0]}, holdout fold {fold}")
         train_dataset = ESC50Dataset(
             root_dir="ESC-50-master/audio",
@@ -109,10 +113,6 @@ def run(kernel_params, max_epochs, min_epochs=20, patience=10, seed=0, use_spec_
 
         summary(model, input_size=(128, 1, 128, 862))
 
-        # wandb.define_metric("train/*", step_metric="epoch")
-        # wandb.define_metric("val/*", step_metric="epoch")
-
-        # Loss and optimizer
         criterion = nn.CrossEntropyLoss()
         optimizer = optim.Adam(model.parameters(), lr=3e-4)
         scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(
@@ -138,15 +138,16 @@ def run(kernel_params, max_epochs, min_epochs=20, patience=10, seed=0, use_spec_
                     f"Train Loss: {avg_train_loss:.4f} - Val Loss: {avg_val_loss:.4f} - Val Acc: {val_acc:.4f}"
                 )
 
-            wandb.log(
-                {
-                    "train_loss": avg_train_loss,
-                    "val_loss": avg_val_loss,
-                    "val_acc": val_acc,
-                    "epoch": epoch,
-                    "lr": optimizer.param_groups[0]["lr"]
-                }
-            )
+            if use_wandb:
+                wandb.log(
+                    {
+                        "train_loss": avg_train_loss,
+                        "val_loss": avg_val_loss,
+                        "val_acc": val_acc,
+                        "epoch": epoch,
+                        "lr": optimizer.param_groups[0]["lr"]
+                    }
+                )
 
             scheduler.step(val_acc)
 
@@ -169,10 +170,11 @@ def run(kernel_params, max_epochs, min_epochs=20, patience=10, seed=0, use_spec_
 
         fold_results.append(best_val_acc)
         print(f"Best val acc for fold {fold}: {best_val_acc:.4f} at epoch {best_epoch + 1}/{epoch + 1}")
-        wandb.summary["best_val_acc"] = best_val_acc
-        wandb.summary["best_epoch"] = best_epoch + 1
-        wandb.summary["epochs_run"] = epoch + 1
-        run.finish()
+        if use_wandb and run:
+            wandb.summary["best_val_acc"] = best_val_acc
+            wandb.summary["best_epoch"] = best_epoch + 1
+            wandb.summary["epochs_run"] = epoch + 1
+            run.finish()
         print(fold_results)
     final_results = sum(fold_results)/len(fold_results)
 
@@ -181,6 +183,9 @@ def run(kernel_params, max_epochs, min_epochs=20, patience=10, seed=0, use_spec_
 if __name__ == "__main__":
     if platform.system() == "Darwin":
         multiprocessing.set_start_method("spawn", force=True)
+
+    use_wandb = True
+
     for seed in [13,43,55]:
         kernel_params_list = [
             ("3x3", (3,3)),
@@ -196,7 +201,7 @@ if __name__ == "__main__":
         print("STARTING RUN WITH SEED:", seed)
         for kernel_params in kernel_params_list:
             print(f"Training with kernel: {kernel_params[0]}")
-            avg_val_acc = run(kernel_params, max_epochs, min_epochs, patience, seed, use_spec_aug=False)
+            avg_val_acc = run(kernel_params, max_epochs, min_epochs, patience, seed, use_spec_aug=False, use_wandb=use_wandb)
             # Add a separator between runs
             print("\n" + "="*50 + "\n")
             print(f"Final val accuracy for {kernel_params[0]} seed {seed}: {avg_val_acc:.4f}")

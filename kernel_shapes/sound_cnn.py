@@ -36,17 +36,15 @@ class SoundCNN(nn.Module):
         self.bn5 = nn.BatchNorm2d(256)
         self.pool5 = nn.MaxPool2d(2)
 
-        # self.fc1   = nn.Linear(in_features=64 * 8 * 53, out_features=128)  # adjust 8*8 if your input dims differ
-        # self.drop1 = nn.Dropout(0.5)
         self.global_pool = nn.AdaptiveAvgPool2d((1, 1))
         self.fc1 = nn.Linear(256, 128)
         self.fc2 = nn.Linear(in_features=128, out_features=num_classes)
 
     def forward(self, x):
         # x shape: (batch, 1, n_mels, time_frames)
-        # print(x.shape)
+
         x = self.conv1(x)
-        # print(x.shape)
+
         x = self.bn1(x)
         x = self.pool1(nn.ReLU()(x))
 

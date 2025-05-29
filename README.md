@@ -10,6 +10,12 @@ unzip master.zip
 ## Install Dependencies and Run
 (with uv)
 
+If you don't want to use wandb:
+
+* Remove `wandb` from `pyproject.toml`
+* Remove `import wandb` from `kernel_shapes/train.py`
+* Set `use_wandb` to `False` in the `if __name__ == "__main__":` block
+
 ```
 uv pip install .[dev]
 uv run python -m kernel_shapes.create_specs
